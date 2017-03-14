@@ -1,15 +1,35 @@
 package Main;
+
 import java.text.DecimalFormat;
 
 public class Data {
 
-	private MainWindow window;
+	final String ALLOYS[] = { "Iron", "StructuralSteel", "HeatResistantSteel", "Aluminium", "Magnesiun_CR",
+			"Magnesiun_Al" };
+
+	public static final int IRON = 0;
+	public static final int STRUCTURALSTEEL = 1;
+	public static final int HEATRESISTANTSTEEL = 2;
+	public static final int ALUMINIUM = 3;
+	public static final int MAGNESIUN_CR = 4;
+	public static final int MAGNESIUN_AL = 5;
+
+	final String KIND_OF_CASTING[] = { "sand_molds", "shell_molds", "chill", "precise_casting", "injection_molding",
+			"squeeze_casting" };
+
+	public static final int SAND_MOLDS = 0;
+	public static final int SHELL_MOLDS = 1;
+	public static final int CHILL = 2;
+	public static final int PRECISE_CASTING = 3;
+	public static final int INJECTION_MOLDING = 4;
+	public static final int SQUEEZE_CASTING = 5;
+
 	// input data
 	private int kindOfAlloy = -1;
 	private int kindOfCasting = -1;
 	private int kindOfSize = -1;
 	private double kIzb = 0;
-	private int duplex = 0; // 0 - single remelting 1 - double
+	private int duplex = 0; // 0 - single remelting 1 - double remelting
 	private double kLosses = 0;
 	private double wasteProduction = 0;
 	private double mDet = 0;
@@ -17,7 +37,6 @@ public class Data {
 	private double mGFS = 0;
 	private double percentOfMarriage = 0;
 	private double percentOfNewMetall = 0;
-	private double mPiece = 0;
 
 	// output data
 
@@ -27,8 +46,26 @@ public class Data {
 	private double newMetall;
 	private double reconvery;
 
-	Data(MainWindow window) {
-		this.window = window;
+	public Data(String kindOfAlloy, String kindOfCasting, double percentOfMarriage, double percentOfNewMetall,
+			boolean duplex, double mDet, double mCast, double mGFS) {
+
+		if (mDet > 0) {
+			this.mDet = mDet;
+		}
+		this.kindOfAlloy = setkindOfAlloy(kindOfAlloy);
+		this.kindOfCasting = setkindOfCasting(kindOfCasting);
+		this.percentOfMarriage = percentOfMarriage;
+		this.percentOfNewMetall = percentOfNewMetall;
+		this.duplex = setDuplex(duplex);
+
+		setkindOfSize(this.mDet);
+		setmCast(mCast);
+		setkindOfSize(this.mCast);
+		setmGFS(mGFS);
+		setwasteProduction();
+		setkLosses();
+		setkIzb();
+
 	}
 
 	// table data
@@ -390,31 +427,26 @@ public class Data {
 	 * Magnesiun Cr - 4 Magnesiun Al - 5
 	 */
 
-	public void setkindOfAlloy(String kindOfAlloy) {
+	public int setkindOfAlloy(String kindOfAlloy) {
 		try {
 			switch (kindOfAlloy) {
 			case "Чугуны":
-				this.kindOfAlloy = 0;
-				break;
+				return IRON;
 			case "Констр. стали":
-				this.kindOfAlloy = 1;
-				break;
+				return STRUCTURALSTEEL;
 			case "Жаропроч. стали":
-				this.kindOfAlloy = 2;
-				break;
+				return HEATRESISTANTSTEEL;
 			case "Алюминий":
-				this.kindOfAlloy = 3;
-				break;
+				return ALUMINIUM;
 			case "Магний с сод. Cr":
-				this.kindOfAlloy = 4;
-				break;
+				return MAGNESIUN_CR;
 			case "Магний с сод. Al":
-				this.kindOfAlloy = 5;
-				break;
+				return MAGNESIUN_AL;
 			}
 		} catch (Exception e) {
 			System.out.println("Ошибка при установке сплава");
 		}
+		return -1;
 
 	}
 
@@ -427,37 +459,28 @@ public class Data {
 	 * injection molding - 4, squeeze casting - 5
 	 */
 
-	public void setkindOfCasting(String kindOfCasting) {
+	public int setkindOfCasting(String kindOfCasting) {
 		try {
 			switch (kindOfCasting) {
 			case "В песчаные формы":
-				this.kindOfCasting = 0;
-				break;
+				return SAND_MOLDS;
 			case "В оболочковые формы":
-				this.kindOfCasting = 1;
-				break;
+				return SHELL_MOLDS;
 			case "В кокиль":
-				this.kindOfCasting = 2;
-				break;
+				return CHILL;
 			case "ЛВМ":
-				this.kindOfCasting = 3;
-				break;
+				return PRECISE_CASTING;
 			case "Под давлением":
-				this.kindOfCasting = 4;
-				break;
+				return INJECTION_MOLDING;
 			case "Выжиманием":
-				this.kindOfCasting = 5;
-				break;
+				return SQUEEZE_CASTING;
 
 			}
 		} catch (Exception e) {
 			System.out.println("Ошибка при установке вида литья");
 		}
+		return -1;
 
-	}
-
-	public int getkindOfCasting() {
-		return kindOfCasting;
 	}
 
 	public void setkindOfSize(double mDet) {
@@ -482,37 +505,18 @@ public class Data {
 		}
 	}
 
-	public int getkindOfSize() {
-		return kindOfSize;
-
-	}
-
-	public void setmDet(double mDet) {
-
-		if (mDet > 0) {
-			this.mDet = mDet;
-		}
-
-	}
-
-	public double getmDet() {
-
-		return mDet;
-	}
-
-	public double getmCast() {
-		return mCast;
+	public String getmDet() {
+		return Formatter(mDet);
 	}
 
 	public void setmCast(double mCast) {
 
-		if (mCast <= 0) {
-			setmCast(getkindOfCasting(), getkindOfSize());
-		} else {
+		if (mCast > 0) {
 			this.mCast = mCast;
+		} else {
+			setmCast(kindOfCasting, kindOfSize);
 
 		}
-
 	}
 
 	public void setmCast(int i, int j) {
@@ -546,20 +550,20 @@ public class Data {
 
 	}
 
-	public double getmGFS() {
-		return mGFS;
+	public String getmCast() {
+		return Formatter(mCast);
 	}
 
 	public void setmGFS(double mGFS) {
-		if (mGFS >= 0) {
+		if (mGFS > 0) {
 			this.mGFS = mGFS;
 		} else
-			setmGFS(getkindOfCasting(), getkindOfSize());
+			setmGFS(kindOfCasting, kindOfSize);
 
 	}
 
 	public void setmGFS(int i, int j) {
-		double k2 = -1;
+		double k2 = 0;
 
 		switch (kindOfAlloy) {
 		case 0:
@@ -585,24 +589,8 @@ public class Data {
 		mGFS = mCast * k2;
 	}
 
-	public double getpercentOfMarriage() {
-		return percentOfMarriage;
-	}
-
-	public void setpercentOfMarriage(double percentOfMarriage) {
-		this.percentOfMarriage = percentOfMarriage;
-	}
-
-	public double getPercentOfNewMetall() {
-		return percentOfNewMetall;
-	}
-
-	public void setPercentOfNewMetall(double percentOfNewMetall) {
-		this.percentOfNewMetall = percentOfNewMetall;
-	}
-
-	public double getkIzb() {
-		return kIzb;
+	public String getmGFS() {
+		return Formatter(mGFS);
 	}
 
 	public void setkIzb() {
@@ -623,10 +611,6 @@ public class Data {
 
 	}
 
-	public double getkLosses() {
-		return kLosses;
-	}
-
 	public void setkLosses() {
 
 		if (kindOfAlloy == 0) {
@@ -643,21 +627,6 @@ public class Data {
 			this.kLosses = kLosses_Magnesiun[kindOfCasting][duplex];
 		}
 
-	}
-
-	public int getDuplex() {
-		return duplex;
-	}
-
-	public void setDuplex(boolean duplex) {
-		if (duplex) {
-			this.duplex = 1;
-		}
-
-	}
-
-	public double getwasteProduction() {
-		return wasteProduction;
 	}
 
 	public void setwasteProduction() {
@@ -677,13 +646,33 @@ public class Data {
 
 	}
 
-	public double getmPiece() {
-		return mPiece;
+	public int setDuplex(boolean duplex) {
+		if (duplex) {
+			return 1;
+		}
+		return 0;
 	}
 
-	public void setmPiece(double mPiece) {
-		this.mPiece = mPiece;
+	// getters for output data return String
 
+	public String getmBatch() {
+		return Formatter(mBatch);
+	}
+
+	public String getNormOfOutgo() {
+		return Formatter(normOfOutgo);
+	}
+
+	public String getNewMetall() {
+		return Formatter(newMetall);
+	}
+
+	public String getReconvery() {
+		return Formatter(reconvery);
+	}
+
+	public String getmLosses() {
+		return Formatter(mLosses);
 	}
 
 	// calculation
@@ -692,57 +681,28 @@ public class Data {
 		// set data
 		System.out.println("Новый рассчет");
 
-		setmDet(window.getmDet());
-		setkindOfSize(window.getmDet());
-
-		System.out.println("Размерная группа детали: " + kindOfSize);
-		System.out.println("М детали: " + mDet);
-		setDuplex(window.isduplex());
-
 		String s;
 		if (duplex == 1) {
 			s = "двойной";
 		} else {
 			s = "одинарный";
 		}
-		System.out.println("Переплав: " + s);
-		setkindOfCasting(window.getkindOfCasting());
-		setkindOfAlloy(window.getkindOfAlloyW());
-
-		setmCast(window.getmCast());
-		System.out.println("М отливки: " + mCast);
-		System.out.println("Размерная группа отливки: " + kindOfSize);
-		setmGFS(window.getmGFS());
-
-		setkIzb();
-		setkLosses();
-		setwasteProduction();
-
-		setpercentOfMarriage(window.getpercentOfMarriage());
-		setPercentOfNewMetall(window.getpercentOfNewMetall());
-		setmPiece(window.getmPiece());
-
-		System.out.println("М отливки с лпс: " + mGFS);
-		System.out.println("Размерная группа в конце установки: " + kindOfSize);
-
 		System.out.println("Сплав: " + kindOfAlloy);
 		System.out.println("Вид литья: " + kindOfCasting);
-
+		System.out.println("Переплав: " + s);
+		System.out.println("М детали: " + mDet);
+		System.out.println("М отливки: " + mCast);
+		System.out.println("М отливки с лпс: " + mGFS);
 		System.out.println("% брака: " + percentOfMarriage);
 		System.out.println("% св. металла: " + percentOfNewMetall);
-		System.out.println("М образцов: " + mPiece);
-
-		System.out.println();
-
 		System.out.println("К изб: " + kIzb);
 		System.out.println("Б.В. Потери: " + kLosses);
 		System.out.println("Отходы: " + wasteProduction);
-
 		System.out.println();
 
 		// processing
 
-		mBatch = ((mGFS + mPiece) * kIzb) / (1 - percentOfMarriage / 100);
+		mBatch = (mGFS * kIzb) / (1 - percentOfMarriage / 100);
 		mLosses = mBatch * (kLosses + wasteProduction) / 100;
 		normOfOutgo = mCast + mLosses;
 		newMetall = mBatch * percentOfNewMetall / 100;
@@ -753,27 +713,11 @@ public class Data {
 		}
 
 		System.out.println("Вес шихты: " + mBatch);
-
 		System.out.println("Масса безв потерь: " + mLosses);
-
 		System.out.println("Норма расхода " + normOfOutgo);
-
 		System.out.println("свежего металла " + newMetall);
-
 		System.out.println("Возврат " + reconvery);
 		System.out.println();
-
-		// set data in window
-
-		window.setmDetAnswer(Formatter(mDet));
-		window.setmCastAnswer(Formatter(mCast));
-		window.setmGFSAnswer(Formatter(mGFS));
-
-		window.setmBatchAnswer(Formatter((mBatch)));
-		window.setmLossesAnswer(Formatter((mLosses)));
-		window.setnormOfRateAnswer(Formatter((normOfOutgo)));
-		window.setmOfNewMetall(Formatter((newMetall)));
-		window.setrecoveryAnswer(Formatter((reconvery)));
 
 	}
 
